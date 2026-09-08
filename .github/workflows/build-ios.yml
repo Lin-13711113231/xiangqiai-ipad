@@ -1,0 +1,83 @@
+name: Build XiangqiAI IPA
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Confirm vendored Pikafish and NNUE
+        run: |
+          test -f vendor/Pikafish/src/engine.cpp
+          test -f XiangqiAI/Resources/pikafish.nnue
+          shasum -a 256 XiangqiAI/Resources/pikafish.nnue
+
+      - name: Regenerate Xcode project
+        run: python3 scripts/generate_xcode_project.py
+
+      - name: Run Xiangqi rule tests
+        run: |
+          mkdir -p build
+          xcrun swiftc \
+            XiangqiAI/Models/Piece.swift \
+            XiangqiAI/Models/Move.swift \
+            XiangqiAI/Models/BoardState.swift \
+            XiangqiAI/Models/GameRules.swift \
+            scripts/GameRulesTests.swift \
+            -o build/GameRulesTests
+          build/GameRulesTests
+
+      - name: Build unsigned iPadOS app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project XiangqiAI.xcodeproj \
+            -scheme XiangqiAI \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            build | tee build/xcodebuild.log
+
+      - name: Create standard unsigned IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -name 'XiangqiAI.app' -type d -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf build/ipa
+          mkdir -p build/ipa/Payload
+          cp -R "$APP_PATH" build/ipa/Payload/XiangqiAI.app
+          ditto -c -k --sequesterRsrc --keepParent build/ipa/Payload XiangqiAI.ipa
+          unzip -l XiangqiAI.ipa | grep -q 'Payload/XiangqiAI.app/'
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: XiangqiAI-IPA
+          path: XiangqiAI.ipa
+          if-no-files-found: error
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XiangqiAI-Build-Logs-and-App
+          path: |
+            build/xcodebuild.log
+            build/DerivedData/Build/Products/Release-iphoneos/XiangqiAI.app
+          if-no-files-found: warn
+

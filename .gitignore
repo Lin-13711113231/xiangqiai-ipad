@@ -1,0 +1,6 @@
+# Local clone staging directory; the distributable vendored source is vendor/Pikafish.
+/third_party/Pikafish/
+/build/
+*.ipa
+*.exe
+__pycache__/
