@@ -9,6 +9,8 @@ func testRules() throws {
     let initial = BoardState()
     try require(GameRules.legalMoves(in: initial).count == 44, "Initial legal-move count should be 44")
     try require(XiangqiMove.fromUCI("a0a1")?.uci == "a0a1", "UCI round trip failed")
+    try require(BoardState(validatingFEN: "not a FEN") == nil, "Malformed FEN must be rejected")
+    try require(BoardState(validatingFEN: BoardState.initialFEN)?.fen() == BoardState.initialFEN, "Valid FEN was rejected")
 
     var horseGrid = emptyGrid(); withGenerals(&horseGrid); horseGrid[7][4] = Piece(color: .red, kind: .horse); horseGrid[6][4] = Piece(color: .red, kind: .pawn)
     let horse = BoardState(squares: horseGrid, sideToMove: .red)

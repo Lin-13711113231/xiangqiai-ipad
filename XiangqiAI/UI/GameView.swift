@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GameView: View {
     @EnvironmentObject private var settings: AppSettings
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var engine = EngineManager()
     @State private var history = [BoardState()]
     @State private var selected: Square?
@@ -48,6 +49,9 @@ struct GameView: View {
         .onAppear { engine.initialize(threads: settings.engineThreads, hashMegabytes: settings.engineHashMB) }
         .onChange(of: settings.engineThreads) { engine.configure(threads: $0, hashMegabytes: settings.engineHashMB) }
         .onChange(of: settings.engineHashMB) { engine.configure(threads: settings.engineThreads, hashMegabytes: $0) }
+        .onChange(of: scenePhase) { phase in
+            if phase != .active { engine.stop() }
+        }
         .onReceive(engine.$info) { info in
             guard !info.bestMove.isEmpty, board.sideToMove != humanColor, result == nil,
                   let move = XiangqiMove.fromUCI(info.bestMove), GameRules.legalMoves(in: board).contains(move) else { return }

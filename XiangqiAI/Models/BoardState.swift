@@ -23,6 +23,13 @@ struct BoardState: Equatable, Codable {
         self.fullmoveNumber = fullmoveNumber
     }
 
+    /// Use this for user-supplied FEN. Unlike `init(fen:)`, it never silently replaces
+    /// malformed input with the initial position.
+    init?(validatingFEN fen: String) {
+        guard let parsed = Self.parseFEN(fen) else { return nil }
+        self = parsed
+    }
+
     subscript(_ square: Square) -> Piece? {
         get { squares[square.row][square.column] }
         set { squares[square.row][square.column] = newValue }

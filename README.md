@@ -18,6 +18,8 @@ No browser, WKWebView, JavaScript, WebAssembly, local HTTP server, or cloud engi
 
 Pikafish is GPLv3. Its source is vendored under `vendor/Pikafish` and its GPL notice, authors, and README are included under `XiangqiAI/LICENSES`. Anyone distributing a derived app must meet Pikafish's GPLv3 source-availability obligations. The `pikafish.nnue` file is bundled from the official Pikafish Networks release and should be redistributed only in accordance with the upstream project's terms.
 
+The only vendored-source change is a narrow `PIKAFISH_EMBEDDED_APP` guard in `vendor/Pikafish/src/nnue/network.cpp`: for the in-process iPad build, an invalid NNUE network raises an exception which the Objective-C++ bridge reports to SwiftUI rather than calling `exit()`. Standalone Pikafish behavior remains unchanged when that compile definition is absent.
+
 ## Local macOS build
 
 ```sh

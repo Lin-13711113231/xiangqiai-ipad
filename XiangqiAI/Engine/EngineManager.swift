@@ -78,6 +78,11 @@ final class EngineManager: ObservableObject {
     }
 
     private func consume(_ dictionary: [String: Any]) {
+        if let error = dictionary["error"] as? String, !error.isEmpty {
+            isSearching = false
+            status = "引擎搜索失败：\(error)"
+            return
+        }
         if let best = dictionary["bestmove"] as? String {
             info.bestMove = best
             isSearching = false

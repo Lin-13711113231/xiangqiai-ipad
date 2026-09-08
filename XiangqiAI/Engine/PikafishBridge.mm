@@ -1,4 +1,5 @@
 #import "PikafishBridge.h"
+#import <dispatch/dispatch.h>
 
 #include <memory>
 #include <sstream>
@@ -65,7 +66,8 @@ static NSString *scoreText(const Score& score);
             _engine->set_on_verify_network([weakSelf = self](std::string_view message) {
                 NSString *text = [[NSString alloc] initWithBytes:message.data() length:message.size() encoding:NSUTF8StringEncoding] ?: @"NNUE 验证失败";
                 if ([text rangeOfString:@"failed" options:NSCaseInsensitiveSearch].location != NSNotFound ||
-                    [text rangeOfString:@"error" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                    [text rangeOfString:@"error" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+                    [text rangeOfString:@"not loaded successfully" options:NSCaseInsensitiveSearch].location != NSNotFound) {
                     [weakSelf setError:text];
                 }
             });
@@ -88,8 +90,12 @@ static NSString *scoreText(const Score& score);
             });
             std::istringstream evalCommand("name EvalFile value " + netPath.string());
             _engine->get_options().setoption(evalCommand);
-            _engine->verify_network();
             [self setError:@""];
+            _engine->verify_network();
+            if (self.lastError.length > 0) {
+                success = NO;
+                _engine.reset();
+            }
         } catch (const std::exception& exception) {
             success = NO;
             [self setError:[NSString stringWithUTF8String:exception.what()]];
@@ -136,7 +142,12 @@ static NSString *scoreText(const Score& score);
         limits.startTime = now();
         @synchronized (self) { _searching = YES; _bestMove = @""; }
         try { _engine->go(limits); }
-        catch (const std::exception& exception) { @synchronized (self) { _searching = NO; }; [self setError:[NSString stringWithUTF8String:exception.what()]]; }
+        catch (const std::exception& exception) {
+            NSString *message = [NSString stringWithUTF8String:exception.what()] ?: @"Pikafish 搜索失败。";
+            @synchronized (self) { _searching = NO; }
+            [self setError:message];
+            [self publishInfo:@{ @"error": message }];
+        }
     });
 }
 

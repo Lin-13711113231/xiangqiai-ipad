@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <optional>
 #include <type_traits>
 #include <vector>
@@ -157,7 +158,14 @@ void Network::verify(const std::function<void(std::string_view)>& f,
             f(msg);
         }
 
+        // The standalone UCI executable cannot recover from a missing NNUE network.
+        // In the iPad in-process build, propagate the validation failure through the thin
+        // Objective-C++ bridge so SwiftUI can show an error instead of terminating the app.
+#if defined(PIKAFISH_EMBEDDED_APP)
+        throw std::runtime_error(msg);
+#else
         exit(EXIT_FAILURE);
+#endif
     }
 
     if (f)

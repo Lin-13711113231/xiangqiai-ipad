@@ -146,6 +146,8 @@ pbx = f'''// !$*UTF8*$!
 \t\t\tCLANG_CXX_LANGUAGE_STANDARD = "c++20";
 \t\t\tCLANG_CXX_LIBRARY = "libc++";
 \t\t\tCLANG_ENABLE_MODULES = YES;
+\t\t\t// Mirrors Pikafish Makefile ARCH=apple-silicon: ARMv8 NEON, popcount, and dot-product NNUE kernels.
+\t\t\tOTHER_CPLUSPLUSFLAGS = "$(inherited) -DUSE_NEON=8 -DUSE_POPCNT -DUSE_NEON_DOTPROD -DPIKAFISH_EMBEDDED_APP -DARCH=apple-silicon -march=armv8.2-a+dotprod";
 \t\t\tCODE_SIGN_STYLE = Automatic;
 \t\t\tCURRENT_PROJECT_VERSION = 1;
 \t\t\tDEVELOPMENT_TEAM = "";
@@ -168,6 +170,8 @@ pbx = f'''// !$*UTF8*$!
 \t\t\tCLANG_CXX_LANGUAGE_STANDARD = "c++20";
 \t\t\tCLANG_CXX_LIBRARY = "libc++";
 \t\t\tCLANG_ENABLE_MODULES = YES;
+\t\t\t// Mirrors Pikafish Makefile ARCH=apple-silicon: ARMv8 NEON, popcount, and dot-product NNUE kernels.
+\t\t\tOTHER_CPLUSPLUSFLAGS = "$(inherited) -DUSE_NEON=8 -DUSE_POPCNT -DUSE_NEON_DOTPROD -DPIKAFISH_EMBEDDED_APP -DARCH=apple-silicon -march=armv8.2-a+dotprod";
 \t\t\tCODE_SIGN_STYLE = Automatic;
 \t\t\tCURRENT_PROJECT_VERSION = 1;
 \t\t\tDEVELOPMENT_TEAM = "";
