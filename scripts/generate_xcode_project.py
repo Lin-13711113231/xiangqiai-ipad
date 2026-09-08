@@ -15,7 +15,7 @@ def q(value: str) -> str:
 
 swift = [
     "XiangqiAI/XiangqiAIApp.swift", "XiangqiAI/Models/Piece.swift", "XiangqiAI/Models/Move.swift",
-    "XiangqiAI/Models/BoardState.swift", "XiangqiAI/Models/GameRules.swift", "XiangqiAI/Engine/EngineManager.swift",
+    "XiangqiAI/Models/BoardState.swift", "XiangqiAI/Models/GameRules.swift", "XiangqiAI/Models/GameHistory.swift", "XiangqiAI/Engine/EngineManager.swift",
     "XiangqiAI/UI/BoardView.swift", "XiangqiAI/UI/GameView.swift", "XiangqiAI/UI/AnalysisView.swift", "XiangqiAI/UI/SettingsView.swift",
 ]
 objcxx = ["XiangqiAI/Engine/PikafishBridge.mm"]
@@ -202,4 +202,3 @@ pbx = f'''// !$*UTF8*$!
 '''
 (PROJECT / "project.pbxproj").write_text(pbx, encoding="utf-8")
 print(PROJECT / "project.pbxproj")
-

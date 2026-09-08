@@ -59,6 +59,29 @@ final class EngineManager: ObservableObject {
         return okay
     }
 
+    /// Keeps Pikafish's state chain intact. Its native WXF adjudicator needs
+    /// every prior move to distinguish ordinary repetition from long checking,
+    /// long chasing, and their protected-piece exceptions.
+    func setPosition(_ game: GameHistory) -> Bool {
+        guard isReady else { status = "引擎尚未准备完成。"; return false }
+        let okay = bridge.setPositionInitialFEN(game.initialFEN, moves: game.uciMoves)
+        if !okay { status = "局面设置失败：\(bridge.lastError)" }
+        return okay
+    }
+
+    func cyclicRuleResult(for game: GameHistory) -> String? {
+        guard isReady else { return nil }
+        switch bridge.ruleJudgement() {
+        case "draw":
+            return "和棋（Pikafish WXF 循环规则裁定）"
+        case "side-to-move-wins":
+            return game.current.sideToMove == .red ? "红方胜（对手长将或长捉）" : "黑方胜（对手长将或长捉）"
+        case "side-to-move-loses":
+            return game.current.sideToMove == .red ? "黑方胜（红方长将或长捉）" : "红方胜（黑方长将或长捉）"
+        default:
+            return nil
+        }
+    }
     func analyze(depth: Int) { start { bridge.analyzeDepth(depth) } }
     func analyze(timeMilliseconds: Int) { start { bridge.analyzeTimeMilliseconds(timeMilliseconds) } }
     func startInfiniteAnalysis() { start { bridge.startInfiniteAnalysis() } }

@@ -18,8 +18,10 @@ enum GameRules {
         return isSquare(general, attackedBy: color.opponent, in: board)
     }
 
-    static func gameResult(in board: BoardState, repetitions: Int = 0) -> String? {
-        if repetitions >= 3 { return "和棋（重复局面）" }
+    /// Checkmate/stalemate-style terminal detection only. Cyclic-position
+    /// adjudication is deliberately performed by Pikafish's native WXF rule
+    /// engine because it needs the full move/state history, not a count of FENs.
+    static func gameResult(in board: BoardState) -> String? {
         if legalMoves(in: board).isEmpty { return board.sideToMove == .red ? "黑方胜" : "红方胜" }
         return nil
     }

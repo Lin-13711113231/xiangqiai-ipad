@@ -306,6 +306,16 @@ void Engine::trace_eval() const {
 const OptionsMap& Engine::get_options() const { return options; }
 OptionsMap&       Engine::get_options() { return options; }
 
+Engine::RuleJudgement Engine::rule_judgement() {
+    Value result;
+    if (!pos.rule_judge(result))
+        return RuleJudgement::None;
+    if (result == VALUE_DRAW)
+        return RuleJudgement::Draw;
+    return result > VALUE_DRAW ? RuleJudgement::SideToMoveWins
+                               : RuleJudgement::SideToMoveLoses;
+}
+
 std::string Engine::fen() const { return pos.fen(); }
 
 std::optional<PositionSetError> Engine::flip() { return pos.flip(); }

@@ -106,19 +106,44 @@ static NSString *scoreText(const Score& score);
 }
 
 - (BOOL)setPositionFEN:(NSString *)fen {
+    return [self setPositionInitialFEN:fen moves:@[]];
+}
+
+- (BOOL)setPositionInitialFEN:(NSString *)fen moves:(NSArray<NSString *> *)moves {
     if (!_engine) { [self setError:@"Pikafish 尚未初始化。" ]; return NO; }
     __block BOOL success = YES;
     dispatch_sync(_engineQueue, ^{
         _engine->stop();
         _engine->wait_for_search_finished();
         @synchronized (self) { _searching = NO; _bestMove = @""; }
-        const auto error = _engine->set_position(std::string([fen UTF8String]), {});
+        std::vector<std::string> nativeMoves;
+        nativeMoves.reserve(moves.count);
+        for (NSString *move in moves) {
+            if (move.length == 0) { continue; }
+            nativeMoves.emplace_back(move.UTF8String);
+        }
+        const auto error = _engine->set_position(std::string(fen.UTF8String), nativeMoves);
         if (error) { success = NO; [self setError:[NSString stringWithUTF8String:error->what()]]; }
         else { [self setError:@""]; }
     });
     return success;
 }
 
+- (NSString *)ruleJudgement {
+    if (!_engine) { return @"none"; }
+    __block Engine::RuleJudgement judgement = Engine::RuleJudgement::None;
+    dispatch_sync(_engineQueue, ^{
+        _engine->wait_for_search_finished();
+        judgement = _engine->rule_judgement();
+    });
+    switch (judgement) {
+    case Engine::RuleJudgement::Draw: return @"draw";
+    case Engine::RuleJudgement::SideToMoveWins: return @"side-to-move-wins";
+    case Engine::RuleJudgement::SideToMoveLoses: return @"side-to-move-loses";
+    case Engine::RuleJudgement::None: return @"none";
+    }
+    return @"none";
+}
 - (void)setThreads:(NSInteger)count {
     if (!_engine) { return; }
     dispatch_sync(_engineQueue, ^{
@@ -177,5 +202,3 @@ static NSString *scoreText(const Score& score) {
     });
 }
 @end
-
-

@@ -53,6 +53,10 @@ class Engine {
     using InfoFull  = Search::InfoFull;
     using InfoIter  = Search::InfoIteration;
 
+    // WXF cyclic-position decision delegated to Position::rule_judge().
+    // The result is always relative to the current side to move.
+    enum class RuleJudgement { None, Draw, SideToMoveWins, SideToMoveLoses };
+
     Engine(std::optional<std::filesystem::path> path = std::nullopt);
 
     // Cannot be movable due to components holding backreferences to fields
@@ -107,6 +111,7 @@ class Engine {
 
     int get_hashfull(int maxAge = 0) const;
 
+    RuleJudgement                       rule_judgement();
     std::string                          fen() const;
     std::optional<PositionSetError>      flip();
     std::string                          visualize() const;

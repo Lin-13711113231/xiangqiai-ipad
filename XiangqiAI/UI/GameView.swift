@@ -4,12 +4,12 @@ struct GameView: View {
     @EnvironmentObject private var settings: AppSettings
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var engine = EngineManager()
-    @State private var history = [BoardState()]
+    @State private var game = GameHistory()
     @State private var selected: Square?
     @State private var lastMove: XiangqiMove?
     @State private var result: String?
 
-    private var board: BoardState { history.last ?? BoardState() }
+    private var board: BoardState { game.current }
     private var humanColor: PieceColor { settings.aiPlaysRed ? .black : .red }
     private var legalFromSelection: Set<Square> {
         guard let selected else { return [] }
@@ -37,7 +37,7 @@ struct GameView: View {
                     engineSummary
                     HStack {
                         Button("新游戏", systemImage: "plus.circle", action: newGame)
-                        Button("悔棋", systemImage: "arrow.uturn.backward", action: undo).disabled(history.count <= 1 || engine.isSearching)
+                        Button("悔棋", systemImage: "arrow.uturn.backward", action: undo).disabled(game.count <= 1 || engine.isSearching)
                         Button("停止 AI", systemImage: "stop.circle", action: engine.stop).disabled(!engine.isSearching)
                     }
                     .buttonStyle(.bordered)
@@ -75,17 +75,19 @@ struct GameView: View {
     }
 
     private func apply(_ move: XiangqiMove) {
-        let next = board.applying(move)
-        history.append(next); lastMove = move; selected = nil
-        result = GameRules.gameResult(in: next, repetitions: history.filter { $0.positionKey == next.positionKey }.count)
-        guard result == nil, next.sideToMove != humanColor else { return }
+        game.append(move); lastMove = move; selected = nil
+        // Keep rule adjudication separate from normal legal-move generation.
+        // The native Pikafish state chain implements the WXF long-check and
+        // long-chase decision, including the engine's protected-piece logic.
+        let positionLoaded = engine.setPosition(game)
+        result = GameRules.gameResult(in: board) ?? (positionLoaded ? engine.cyclicRuleResult(for: game) : nil)
+        guard result == nil, board.sideToMove != humanColor, positionLoaded else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            guard engine.setPosition(next) else { return }
             engine.analyze(timeMilliseconds: settings.thinkTimeMs)
         }
     }
 
-    private func newGame() { engine.stop(); history = [BoardState()]; selected = nil; lastMove = nil; result = nil; if settings.aiPlaysRed { startAI() } }
-    private func undo() { engine.stop(); let count = min(2, history.count - 1); if count > 0 { history.removeLast(count); lastMove = nil; selected = nil; result = nil } }
-    private func startAI() { guard engine.setPosition(board) else { return }; engine.analyze(timeMilliseconds: settings.thinkTimeMs) }
+    private func newGame() { engine.stop(); game = GameHistory(); selected = nil; lastMove = nil; result = nil; if settings.aiPlaysRed { startAI() } }
+    private func undo() { engine.stop(); game.undo(plies: min(2, game.moves.count)); lastMove = nil; selected = nil; result = nil }
+    private func startAI() { guard engine.setPosition(game) else { return }; engine.analyze(timeMilliseconds: settings.thinkTimeMs) }
 }

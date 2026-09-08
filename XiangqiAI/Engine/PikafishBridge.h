@@ -11,6 +11,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)initializeWithNetworkPath:(NSString *)networkPath;
 - (BOOL)setPositionFEN:(NSString *)fen;
+- (BOOL)setPositionInitialFEN:(NSString *)fen moves:(NSArray<NSString *> *)moves;
+/// `none`, `draw`, `side-to-move-wins`, or `side-to-move-loses` from Pikafish WXF rules.
+- (NSString *)ruleJudgement;
 - (void)setThreads:(NSInteger)count;
 - (void)setHashMegabytes:(NSInteger)megabytes;
 - (void)analyzeDepth:(NSInteger)depth;

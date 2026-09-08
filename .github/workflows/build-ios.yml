@@ -34,6 +34,7 @@ jobs:
             XiangqiAI/Models/Move.swift \
             XiangqiAI/Models/BoardState.swift \
             XiangqiAI/Models/GameRules.swift \
+            XiangqiAI/Models/GameHistory.swift \
             scripts/GameRulesTests.swift \
             -o build/GameRulesTests
           build/GameRulesTests
@@ -80,4 +81,3 @@ jobs:
             build/xcodebuild.log
             build/DerivedData/Build/Products/Release-iphoneos/XiangqiAI.app
           if-no-files-found: warn
-
