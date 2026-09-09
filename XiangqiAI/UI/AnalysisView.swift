@@ -10,6 +10,7 @@ struct AnalysisView: View {
     @State private var palettePiece: Piece?
     @State private var fenText = BoardState.initialFEN
     @State private var detailTab = 0
+    @AppStorage("analysisNotes") private var analysisNotes = ""
 
     private var destinations: Set<Square> {
         guard !editing, let selected else { return [] }
@@ -102,18 +103,21 @@ struct AnalysisView: View {
 
     private var positionPanel: some View {
         VStack(spacing: 0) {
-            Picker("局面详情", selection: $detailTab) {
-                Text("局势").tag(0)
-                Text("摆子").tag(1)
-                Text("FEN").tag(2)
+            // These native tabs deliberately mirror the reference product's workspace:
+            // Pikafish occupies the adjacent live-engine panel; the remaining views are
+            // local/offline equivalents so the app never needs a web service.
+            Picker("工作区", selection: $detailTab) {
+                Text("云库").tag(0)
+                Text("局势").tag(1)
+                Text("注释").tag(2)
             }
             .pickerStyle(.segmented).padding(9)
             Divider()
             Group {
                 switch detailTab {
-                case 0: situationInfo
-                case 1: editingControls
-                default: fenControls
+                case 0: localLibraryControls
+                case 1: situationInfo
+                default: notesControls
                 }
             }
             .frame(height: 270, alignment: .top)
@@ -121,6 +125,59 @@ struct AnalysisView: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 9))
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(XiangqiAppearance.panelBorder))
         .frame(width: 270)
+    }
+
+    private var localLibraryControls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("本地局面库").font(.subheadline.weight(.semibold))
+            Text("保持离线：可载入 FEN、自由摆子和保存本机注释；不会访问云端。")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            TextField("FEN", text: $fenText, axis: .vertical)
+                .textFieldStyle(.roundedBorder).font(.caption.monospaced()).lineLimit(2)
+            HStack(spacing: 7) {
+                Button("载入", systemImage: "square.and.arrow.down") {
+                    guard let candidate = BoardState(validatingFEN: fenText) else { return }
+                    engine.stop(); board = candidate; selected = nil; fenText = candidate.fen()
+                }
+                .buttonStyle(.borderedProminent)
+                Button("初始", systemImage: "arrow.counterclockwise") {
+                    engine.stop(); board = BoardState(); selected = nil; fenText = board.fen()
+                }
+                .buttonStyle(.bordered)
+            }
+            Toggle("自由摆子", isOn: $editing).onChange(of: editing) { if $0 { selected = nil } }
+            ForEach(PieceColor.allCases, id: \.self) { color in
+                HStack(spacing: 4) {
+                    ForEach(PieceKind.allCases, id: \.self) { kind in
+                        let piece = Piece(color: color, kind: kind)
+                        Button(piece.glyph) { palettePiece = piece }
+                            .font(.system(size: 15, weight: .bold, design: .serif))
+                            .foregroundStyle(piece.color == .red ? .red : XiangqiAppearance.ink)
+                            .frame(width: 24, height: 22)
+                            .background(palettePiece == piece ? XiangqiAppearance.accent.opacity(0.16) : XiangqiAppearance.canvas, in: RoundedRectangle(cornerRadius: 4))
+                            .buttonStyle(.plain)
+                    }
+                    Button("清") { palettePiece = nil }
+                        .font(.caption2.weight(.semibold)).buttonStyle(.borderless)
+                }
+            }
+        }
+        .padding(12)
+    }
+
+    private var notesControls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("注释").font(.subheadline.weight(.semibold))
+            Text("本机保存，可用于记录变例、计划与评估。")
+                .font(.caption).foregroundStyle(.secondary)
+            TextEditor(text: $analysisNotes)
+                .font(.caption)
+                .scrollContentBackground(.hidden)
+                .padding(5)
+                .background(XiangqiAppearance.canvas, in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(XiangqiAppearance.panelBorder))
+        }
+        .padding(12)
     }
 
     private var situationInfo: some View {
