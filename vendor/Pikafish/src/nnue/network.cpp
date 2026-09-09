@@ -138,25 +138,22 @@ void Network::verify(const std::function<void(std::string_view)>& f,
 
     if (evalFile.current != evalfilePath)
     {
+        std::string msg1 =
+          "Network evaluation parameters compatible with the engine must be available.";
+        std::string msg2 =
+          "The network file " + evalfilePath.string() + " was not loaded successfully.";
+        std::string msg3 = "The UCI option EvalFile might need to specify the full path, "
+                           "including the directory name, to the network file.";
+        std::string msg4 =
+          "The default net can be downloaded from: "
+          "https://github.com/official-pikafish/Networks/releases/download/master-net/"
+          + std::string(evalFile.defaultName);
+        std::string msg5 = "The engine will be terminated now.";
+        std::string msg = "ERROR: " + msg1 + '\n' + "ERROR: " + msg2 + '\n' + "ERROR: " + msg3
+                        + '\n' + "ERROR: " + msg4 + '\n' + "ERROR: " + msg5 + '\n';
+
         if (f)
-        {
-            std::string msg1 =
-              "Network evaluation parameters compatible with the engine must be available.";
-            std::string msg2 =
-              "The network file " + evalfilePath.string() + " was not loaded successfully.";
-            std::string msg3 = "The UCI option EvalFile might need to specify the full path, "
-                               "including the directory name, to the network file.";
-            std::string msg4 =
-              "The default net can be downloaded from: "
-              "https://github.com/official-pikafish/Networks/releases/download/master-net/"
-              + std::string(evalFile.defaultName);
-            std::string msg5 = "The engine will be terminated now.";
-
-            std::string msg = "ERROR: " + msg1 + '\n' + "ERROR: " + msg2 + '\n' + "ERROR: " + msg3
-                            + '\n' + "ERROR: " + msg4 + '\n' + "ERROR: " + msg5 + '\n';
-
             f(msg);
-        }
 
         // The standalone UCI executable cannot recover from a missing NNUE network.
         // In the iPad in-process build, propagate the validation failure through the thin
