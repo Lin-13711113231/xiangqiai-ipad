@@ -23,8 +23,8 @@ struct AnalysisView: View {
                 VStack(spacing: 14) {
                     header
                     ViewThatFits(in: .horizontal) {
-                        HStack(alignment: .top, spacing: 12) { boardPanel; analysisPanel; positionPanel }
-                        VStack(spacing: 12) { boardPanel; HStack(alignment: .top, spacing: 12) { analysisPanel; positionPanel } }
+                        HStack(alignment: .top, spacing: 12) { boardPanel; workspacePanel }
+                        VStack(spacing: 12) { boardPanel; workspacePanel }
                     }
                     controls
                 }
@@ -72,7 +72,7 @@ struct AnalysisView: View {
         .frame(width: 405)
     }
 
-    private var analysisPanel: some View {
+    private var enginePanel: some View {
         VStack(spacing: 0) {
             panelHeader("皮卡鱼", icon: "cpu", trailing: engine.isSearching ? "分析中" : "待命")
             VStack(alignment: .leading, spacing: 10) {
@@ -96,35 +96,35 @@ struct AnalysisView: View {
             }
             .padding(12).frame(height: 316, alignment: .top)
         }
-        .background(.white, in: RoundedRectangle(cornerRadius: 9))
-        .overlay(RoundedRectangle(cornerRadius: 9).stroke(XiangqiAppearance.panelBorder))
-        .frame(width: 250)
     }
 
-    private var positionPanel: some View {
+    private var workspacePanel: some View {
         VStack(spacing: 0) {
-            // These native tabs deliberately mirror the reference product's workspace:
-            // Pikafish occupies the adjacent live-engine panel; the remaining views are
-            // local/offline equivalents so the app never needs a web service.
+            // The four labels and their order mirror the reference analysis workspace.
+            // Cloud-library behavior is intentionally replaced with local FEN tools so
+            // the native application remains completely offline.
             Picker("工作区", selection: $detailTab) {
-                Text("云库").tag(0)
-                Text("局势").tag(1)
-                Text("注释").tag(2)
+                Text("皮卡鱼").tag(0)
+                Text("云库").tag(1)
+                Text("局势").tag(2)
+                Text("注释").tag(3)
             }
-            .pickerStyle(.segmented).padding(9)
+            .pickerStyle(.segmented)
+            .padding(9)
             Divider()
             Group {
                 switch detailTab {
-                case 0: localLibraryControls
-                case 1: situationInfo
+                case 0: enginePanel
+                case 1: localLibraryControls
+                case 2: situationInfo
                 default: notesControls
                 }
             }
-            .frame(height: 270, alignment: .top)
+            .frame(height: 316, alignment: .top)
         }
         .background(.white, in: RoundedRectangle(cornerRadius: 9))
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(XiangqiAppearance.panelBorder))
-        .frame(width: 270)
+        .frame(width: 520)
     }
 
     private var localLibraryControls: some View {
