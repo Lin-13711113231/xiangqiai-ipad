@@ -162,11 +162,14 @@ static NSString *scoreText(const Score& score);
 
 - (void)begin:(Search::LimitsType)limits {
     if (!_engine) { [self setError:@"Pikafish 尚未初始化。" ]; return; }
+    // Objective-C blocks capture C++ values as const. __block keeps this per-search
+    // limits object mutable so Pikafish receives the non-const reference its go() API needs.
+    __block Search::LimitsType scheduledLimits = limits;
     dispatch_async(_engineQueue, ^{
         _engine->stop(); _engine->wait_for_search_finished();
-        limits.startTime = now();
+        scheduledLimits.startTime = now();
         @synchronized (self) { _searching = YES; _bestMove = @""; }
-        try { _engine->go(limits); }
+        try { _engine->go(scheduledLimits); }
         catch (const std::exception& exception) {
             NSString *message = [NSString stringWithUTF8String:exception.what()] ?: @"Pikafish 搜索失败。";
             @synchronized (self) { _searching = NO; }
