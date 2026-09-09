@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 struct RulesTestFailure: Error { let message: String }
 func require(_ condition: @autoclosure () -> Bool, _ message: String) throws { if !condition() { throw RulesTestFailure(message: message) } }
@@ -44,4 +45,14 @@ func requireMove(_ uci: String) throws -> XiangqiMove {
     return move
 }
 
-do { try testRules() } catch { fputs("GameRulesTests: FAIL: \(error)\n", stderr); exit(1) }
+@main
+struct GameRulesTestRunner {
+    static func main() {
+        do {
+            try testRules()
+        } catch {
+            fputs("GameRulesTests: FAIL: \(error)\n", stderr)
+            exit(1)
+        }
+    }
+}
